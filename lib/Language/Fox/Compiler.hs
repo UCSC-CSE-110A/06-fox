@@ -305,6 +305,9 @@ stackVar i = RegOffset (-4 * i) EBP
 --------------------------------------------------------------------------------
 -- | Garbage Collection
 --------------------------------------------------------------------------------
+wptr :: Arg -> Arg
+wptr a = Sized DWordPtr a
+
 tupleReserve :: Ann -> Int -> [Instruction]
 tupleReserve l bytes
   = [ -- check for space
