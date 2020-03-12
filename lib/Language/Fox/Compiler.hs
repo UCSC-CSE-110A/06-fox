@@ -303,6 +303,25 @@ stackVar :: Int -> Arg
 stackVar i = RegOffset (-4 * i) EBP
 
 --------------------------------------------------------------------------------
+-- | Garbage Collection
+--------------------------------------------------------------------------------
+tupleReserve :: Ann -> Int -> [Instruction]
+tupleReserve l bytes
+  = [ -- check for space
+      IMov (Reg EAX) (LabelVar "HEAP_END")
+    , ISub (Reg EAX) (Const bytes)
+    , ICmp (Reg ESI) (Reg EAX)
+    , IJl  (MemCheck (annTag l))   -- if ESI <= HEAP_END - size then OK else try_gc
+    , IJe  (MemCheck (annTag l))
+    , IMov (Reg EBX) (Reg ESP)
+    ]
+ ++ call (Builtin "try_gc") [ Reg ESI, wptr $ Const bytes, Reg EBP, Reg EBX ]
+ ++ [ -- assume gc success if here; EAX holds new ESI
+      IMov (Reg ESI) (Reg EAX)
+    , ILabel (MemCheck (annTag l))
+    ]
+
+--------------------------------------------------------------------------------
 -- | Representing Values
 --------------------------------------------------------------------------------
 
